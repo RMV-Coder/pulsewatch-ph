@@ -26,6 +26,7 @@ interface HealthData {
   status: 'healthy' | 'warning' | 'error';
   statistics: SystemStats;
   recentEvents: HealthEvent[];
+  database_connected?: boolean;
   timestamp: string;
 }
 
@@ -140,13 +141,25 @@ export default function HealthPage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="flex items-center gap-2">
+                      <Database className="w-4 h-4" style={{ 
+                        color: healthData.database_connected ? 'var(--success)' : 'var(--error)' 
+                      }} />
+                      <span className="text-sm" style={{ 
+                        color: healthData.database_connected ? 'var(--success)' : 'var(--error)' 
+                      }}>
+                        {healthData.database_connected ? 'DB Connected' : 'DB Disconnected'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
                     <Clock className="w-4 h-4" />
                     <span>Last updated: {formatDistanceToNow(new Date(healthData.timestamp), { addSuffix: true })}</span>
                   </div>
                   <button
                     onClick={fetchHealth}
-                    className="mt-2 text-sm px-4 py-2 rounded-lg transition-smooth hover:scale-105"
+                    className="text-sm px-4 py-2 rounded-lg transition-smooth hover:scale-105"
                     style={{
                       backgroundColor: 'var(--accent-primary)',
                       color: 'var(--text-primary)',

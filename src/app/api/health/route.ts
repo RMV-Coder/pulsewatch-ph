@@ -41,6 +41,9 @@ export async function GET() {
     const { data: sentimentDist } = await supabase
       .rpc('get_sentiment_distribution');
 
+    // Database connectivity check
+    const dbConnected = stats !== null && !statsError;
+
     return NextResponse.json({
       success: true,
       data: {
@@ -48,6 +51,7 @@ export async function GET() {
         statistics: systemStats,
         sentiment_distribution: sentimentDist || [],
         recent_events: healthEvents?.slice(0, 5) || [],
+        database_connected: dbConnected,
         timestamp: new Date().toISOString()
       }
     });
@@ -86,38 +90,46 @@ function determineSystemStatus(
   stats: SystemStatsRow | null,
   events: SystemHealthEvent[]
 ): 'healthy' | 'warning' | 'error' {
-  // Check for recent errors
-  const recentErrors = events.filter(e => 
-    e.metric_name.includes('error') && 
-    new Date(e.recorded_at) > new Date(Date.now() - 3600000) // Last hour
-  );
-
-  if (recentErrors.length > 3) {
+  // Check if stats is null (database connection issue)
+  if (!stats) {
     return 'error';
   }
 
-  // Check if stats is null
-  if (!stats) {
-    return 'warning';
+  // Check for critical errors in the last hour (more than 5 errors = system error)
+  const recentCriticalErrors = events.filter(e => {
+    const isRecent = new Date(e.recorded_at) > new Date(Date.now() - 3600000); // Last hour
+    const isCriticalError = e.metric_name.includes('failed') || 
+                           e.metric_name.includes('error') ||
+                           e.metric_name === 'scrape_error' ||
+                           e.metric_name === 'analysis_error';
+    return isRecent && isCriticalError;
+  });
+
+  if (recentCriticalErrors.length > 5) {
+    return 'error';
   }
 
-  // Check if data is stale
-  const lastPostTime = stats.last_post_time ? new Date(stats.last_post_time) : null;
-  const lastAnalysisTime = stats.last_analysis_time ? new Date(stats.last_analysis_time) : null;
-  
-  const oneHourAgo = new Date(Date.now() - 3600000);
-  
-  if (stats.total_posts === 0 || stats.total_analyzed === 0) {
-    return 'warning';
+  // If there's data in the system, it's operational
+  if ((stats.total_posts ?? 0) > 0 || (stats.total_analyzed ?? 0) > 0) {
+    // System has data and is functional
+    
+    // Warning if too many errors (but not critical)
+    if (recentCriticalErrors.length > 2) {
+      return 'warning';
+    }
+
+    // Warning if there are unanalyzed posts and analysis hasn't run in 24 hours
+    const hasUnanalyzedPosts = (stats.total_posts ?? 0) > (stats.total_analyzed ?? 0);
+    const lastAnalysisTime = stats.last_analysis_time ? new Date(stats.last_analysis_time) : null;
+    const oneDayAgo = new Date(Date.now() - 86400000); // 24 hours
+    
+    if (hasUnanalyzedPosts && lastAnalysisTime && lastAnalysisTime < oneDayAgo) {
+      return 'warning';
+    }
+
+    return 'healthy';
   }
 
-  if (lastPostTime && lastPostTime < oneHourAgo && (stats.total_posts ?? 0) > 0) {
-    return 'warning';
-  }
-
-  if (lastAnalysisTime && lastAnalysisTime < oneHourAgo && (stats.total_analyzed ?? 0) < (stats.total_posts ?? 0)) {
-    return 'warning';
-  }
-
+  // No data yet but system is functional (initial state)
   return 'healthy';
 }
