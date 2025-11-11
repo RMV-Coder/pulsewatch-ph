@@ -25,8 +25,11 @@ export default function Navigation() {
             </div>
           </Link>
 
-          {/* Navigation Links */}
-          <div className="flex items-center gap-3 sm:gap-6">
+          {/* Spacer - pushes right items to the right */}
+          <div className="flex-1"></div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link 
               href="/health"
               className="flex items-center gap-2 text-sm font-medium transition-smooth hover:opacity-80"
@@ -37,10 +40,6 @@ export default function Navigation() {
               <Activity className="w-4 h-4" />
               <span className="hidden sm:inline">Health</span>
             </Link>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-2 sm:gap-4">
             <ThemeToggle />
           </div>
         </div>

@@ -2,6 +2,7 @@
 'use client';
 
 import { Search, Filter } from 'lucide-react';
+import { useState } from 'react';
 
 interface FiltersProps {
   sentiment: string;
@@ -20,6 +21,8 @@ export default function Filters({
   onSourceChange,
   onSearchChange,
 }: FiltersProps) {
+  const [hoveredOption, setHoveredOption] = useState<string | null>(null);
+
   return (
     <div className="card p-4 mb-6">
       <div className="flex items-center gap-2 mb-4">
@@ -51,13 +54,18 @@ export default function Filters({
         </div>
 
         {/* Source Filter */}
-        <div>
+        <div className="relative">
           <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
             Source
           </label>
           <select
             value={source}
-            onChange={(e) => onSourceChange(e.target.value)}
+            onChange={(e) => {
+              // Only allow 'all' and 'reddit'
+              if (e.target.value === 'all' || e.target.value === 'reddit') {
+                onSourceChange(e.target.value);
+              }
+            }}
             className="w-full px-3 py-2 rounded-md focus:outline-none focus:ring-2 transition-all"
             style={{
               backgroundColor: 'var(--bg-card)',
@@ -67,10 +75,52 @@ export default function Filters({
           >
             <option value="all">All Sources</option>
             <option value="reddit">Reddit</option>
-            <option value="twitter">Twitter</option>
-            <option value="news">News</option>
-            <option value="facebook">Facebook</option>
+            <option 
+              value="twitter" 
+              disabled 
+              style={{ color: 'var(--text-secondary)', opacity: 0.5 }}
+              onMouseEnter={() => setHoveredOption('twitter')}
+              onMouseLeave={() => setHoveredOption(null)}
+            >
+              Twitter (Coming Soon)
+            </option>
+            <option 
+              value="news" 
+              disabled 
+              style={{ color: 'var(--text-secondary)', opacity: 0.5 }}
+              onMouseEnter={() => setHoveredOption('news')}
+              onMouseLeave={() => setHoveredOption(null)}
+            >
+              News (Coming Soon)
+            </option>
+            <option 
+              value="facebook" 
+              disabled 
+              style={{ color: 'var(--text-secondary)', opacity: 0.5 }}
+              onMouseEnter={() => setHoveredOption('facebook')}
+              onMouseLeave={() => setHoveredOption(null)}
+            >
+              Facebook (Coming Soon)
+            </option>
           </select>
+          
+          {/* Tooltip */}
+          {hoveredOption && (
+            <div 
+              className="absolute z-10 px-3 py-2 text-sm rounded-md shadow-lg whitespace-nowrap"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border)',
+                top: '100%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                marginTop: '4px',
+              }}
+            >
+              This source will be supported in future updates
+            </div>
+          )}
         </div>
 
         {/* Search */}
