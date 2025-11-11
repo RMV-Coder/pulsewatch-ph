@@ -983,8 +983,10 @@ function determineSystemStatus(
 
 ### Live Application
 
-![Dashboard View](screenshots/dashboard.png)
-*Main dashboard showing analyzed posts with filters*
+![Dashboard View](screenshots/dashboard-1.png)
+*Main dashboard showing analyzed posts KPIs*
+![Dashboard View](screenshots/dashboard-2.png)
+*Main dashboard showing posts pagination*
 
 ![System Health](screenshots/health.png)
 *Health monitoring page with system metrics*
@@ -1124,7 +1126,7 @@ APIFY_ACTOR_ID=practicaltools/apify-reddit-api
 
 ---
 
-## � Submission Checklist
+## Submission Checklist
 
 **Required Deliverables:**
 - ✅ **Hosted Application URL**: https://pulsewatch-ph.vercel.app
@@ -1148,11 +1150,11 @@ APIFY_ACTOR_ID=practicaltools/apify-reddit-api
 
 ---
 
-## �👤 Author
+## 👤 Author
 
 Built by Raymond Valdepeñas for the Full-Stack Developer Technical Challenge
 
-**Contact**: raymondvaldepenas-dev@gmail.com | mond.valdepenas.m.13@gmail.com 
+**Contact**: raymondvaldepenas-dev@gmail.com | mond.valdepenas.m.13@gmail.com \
 **Portfolio**: https://raymondvaldepenas-dev.vercel.app
 
 ---
