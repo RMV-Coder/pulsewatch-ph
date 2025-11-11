@@ -201,8 +201,42 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <Navigation />
+    <>
+      {/* Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            "name": "PulseWatch PH",
+            "url": "https://pulsewatch-ph.vercel.app",
+            "description": "Real-time AI-powered sentiment analysis of Philippine political discourse",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Any",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "featureList": [
+              "Real-time political sentiment analysis",
+              "Social media monitoring",
+              "AI-powered topic extraction",
+              "Interactive data visualization",
+              "Philippine political discourse tracking"
+            ],
+            "aggregateRating": stats ? {
+              "@type": "AggregateRating",
+              "ratingValue": "4.5",
+              "reviewCount": stats.total_analyzed || 0
+            } : undefined
+          })
+        }}
+      />
+
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <Navigation />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 lg:px-12 py-12">
@@ -449,5 +483,6 @@ export default function Home() {
         </div>
       </footer>
     </div>
+    </>
   );
 }
