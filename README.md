@@ -983,8 +983,10 @@ function determineSystemStatus(
 
 ### Live Application
 
-![Dashboard View](screenshots/dashboard.png)
-*Main dashboard showing analyzed posts with filters*
+![Dashboard View](screenshots/dashboard-1.png)
+*Main dashboard showing analyzed posts KPIs*
+![Dashboard View](screenshots/dashboard-2.png)
+*Main dashboard showing posts pagination*
 
 ![System Health](screenshots/health.png)
 *Health monitoring page with system metrics*
