@@ -10,8 +10,8 @@ A full-stack SaaS application that collects public political discussions from Re
 
 ## 🔗 Links
 
-- **Live Application:** [Your Vercel URL Here]
-- **GitHub Repository:** https://github.com/yourusername/pulsewatch-ph
+- **Live Application:** https://pulsewatch-ph.vercel.app
+- **GitHub Repository:** https://github.com/RMV-Coder/pulsewatch-ph
 
 ---
 
@@ -78,7 +78,7 @@ A full-stack SaaS application that collects public political discussions from Re
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/pulsewatch-ph.git
+git clone https://github.com/RMV-Coder/pulsewatch-ph.git
 cd pulsewatch-ph
 
 # Install dependencies
@@ -126,9 +126,15 @@ pulsewatch-ph/
 │   │   │   │   ├── route.ts             # GET - Fetch posts with pagination
 │   │   │   │   └── [id]/route.ts        # GET - Fetch single post
 │   │   │   ├── analytics/route.ts       # GET - Analytics aggregation
-│   │   │   └── health/route.ts          # GET - System health metrics
+│   │   │   ├── health/route.ts          # GET - System health metrics
+│   │   │   └── cleanup/route.ts         # POST - Remove duplicate posts
+│   │   ├── health/
+│   │   │   ├── page.tsx                 # Health monitoring dashboard
+│   │   │   └── layout.tsx               # Health page metadata
+│   │   ├── sitemap.ts                   # SEO - XML sitemap generator
+│   │   ├── robots.ts                    # SEO - robots.txt generator
 │   │   ├── globals.css                  # CSS variables for dark/light theme
-│   │   ├── layout.tsx                   # Root layout with ThemeProvider
+│   │   ├── layout.tsx                   # Root layout with SEO metadata
 │   │   └── page.tsx                     # Main dashboard page
 │   ├── components/
 │   │   ├── Navigation.tsx               # Header with theme toggle
@@ -150,10 +156,18 @@ pulsewatch-ph/
 │       └── supabase/
 │           ├── client.ts                # Client-side Supabase
 │           └── server.ts                # Server-side Supabase
-├── public/                              # Static assets
+├── public/                              # Static assets & PWA files
+│   ├── favicon.svg                      # Vector favicon
+│   ├── android-chrome-192x192.png       # PWA icon
+│   ├── android-chrome-512x512.png       # PWA icon
+│   ├── apple-touch-icon.png             # Apple touch icon
+│   └── manifest.json                    # PWA manifest
+├── supabase-schema.sql                  # Complete database schema
+├── supabase-migration-unanalyzed-posts.sql  # Database function migration
 ├── package.json
 ├── tsconfig.json                        # TypeScript strict config
 ├── eslint.config.mjs                    # ESLint with no-explicit-any
+├── SEO-CHECKLIST.md                     # SEO implementation guide
 └── README.md
 ```
 
@@ -200,7 +214,9 @@ LEFT JOIN sentiment_analysis s ON p.id = s.post_id;
 
 #### 5. Helper Functions
 - `get_system_stats()` - Returns aggregated metrics for dashboard
-- Used by `/api/health` endpoint for real-time monitoring
+- `get_sentiment_distribution()` - Returns sentiment counts for analytics
+- `get_unanalyzed_posts(batch_limit)` - Efficiently fetches posts without sentiment analysis using NOT EXISTS
+- Used by `/api/health` and `/api/analyze` endpoints for real-time monitoring and batch processing
 
 ### Tradeoffs Considered
 
@@ -927,7 +943,7 @@ function determineSystemStatus(
 
 2. **Scheduled Health Checks**
    - Vercel Cron: Ping `/api/health` every 5 minutes
-   - If `status !== 'healthy'` → Send Slack notification
+   - If `status !== 'healthy'` → Log to monitoring service or send email notification
    - Track uptime percentage (SLA monitoring)
 
 3. **User-Facing Status Page**
