@@ -131,6 +131,24 @@ CREATE POLICY "Allow all operations" ON political_posts FOR ALL USING (true);
 CREATE POLICY "Allow all operations" ON sentiment_analysis FOR ALL USING (true);
 CREATE POLICY "Allow all operations" ON system_health FOR ALL USING (true);
 
+-- Function to get unanalyzed posts efficiently
+-- This uses NOT EXISTS which is more efficient than fetching all and filtering in JS
+CREATE OR REPLACE FUNCTION get_unanalyzed_posts(batch_limit INT DEFAULT 50)
+RETURNS TABLE (id UUID, content TEXT) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT pp.id, pp.content
+  FROM political_posts pp
+  WHERE NOT EXISTS (
+    SELECT 1 
+    FROM sentiment_analysis sa 
+    WHERE sa.post_id = pp.id
+  )
+  ORDER BY pp.created_at DESC
+  LIMIT batch_limit;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Sample data for testing (optional)
 -- Uncomment to insert test data
 /*

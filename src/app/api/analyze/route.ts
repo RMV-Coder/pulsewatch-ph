@@ -42,33 +42,40 @@ export async function POST(request: Request) {
   try {
     const supabase = createServiceClient();
     
-    // First, get all analyzed post IDs
-    const { data: analyzedPosts } = await supabase
-      .from('sentiment_analysis')
-      .select('post_id');
+    // Try to use the database function first for better performance
+    const { data: unanalyzedPosts, error: rpcError } = await supabase.rpc('get_unanalyzed_posts', {
+      batch_limit: API_LIMITS.ANALYSIS_BATCH_SIZE
+    });
 
-    const analyzedPostIds = new Set(analyzedPosts?.map(p => p.post_id) || []);
-    
-    console.log(`Found ${analyzedPostIds.size} already analyzed posts`);
-    
-    // Get all posts
-    const { data: allPosts, error: fetchError } = await supabase
-      .from('political_posts')
-      .select('id, content')
-      .order('created_at', { ascending: false })
-      .limit(API_LIMITS.ANALYSIS_BATCH_SIZE * 2); // Fetch more to account for already analyzed
+    let postsToAnalyze: Array<{ id: string; content: string }> = [];
 
-    if (fetchError) {
-      throw new Error(`Failed to fetch posts: ${fetchError.message}`);
+    if (rpcError || !unanalyzedPosts) {
+      // Fallback: Use the old method if RPC doesn't exist yet
+      console.log('RPC not available, using fallback query');
+      
+      const { data: analyzedPosts } = await supabase
+        .from('sentiment_analysis')
+        .select('post_id');
+
+      const analyzedPostIds = new Set(analyzedPosts?.map(p => p.post_id) || []);
+      
+      const { data: allPosts, error: fetchError } = await supabase
+        .from('political_posts')
+        .select('id, content')
+        .order('created_at', { ascending: false })
+        .limit(API_LIMITS.ANALYSIS_BATCH_SIZE * 2);
+
+      if (fetchError) {
+        throw new Error(`Failed to fetch posts: ${fetchError.message}`);
+      }
+
+      const filteredPosts = allPosts?.filter(post => !analyzedPostIds.has(post.id)) || [];
+      postsToAnalyze = filteredPosts.slice(0, API_LIMITS.ANALYSIS_BATCH_SIZE);
+    } else {
+      postsToAnalyze = unanalyzedPosts;
     }
-
-    // Filter out already analyzed posts
-    const posts = allPosts?.filter(post => !analyzedPostIds.has(post.id)) || [];
     
-    // Limit to batch size
-    const postsToAnalyze = posts.slice(0, API_LIMITS.ANALYSIS_BATCH_SIZE);
-    
-    console.log(`Found ${posts.length} unanalyzed posts, will analyze ${postsToAnalyze.length}`);
+    console.log(`Found ${postsToAnalyze.length} unanalyzed posts`);
 
     if (postsToAnalyze.length === 0) {
       return NextResponse.json({
