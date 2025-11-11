@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PlayCircle, Brain, RefreshCw, AlertCircle } from 'lucide-react';
+import { PlayCircle, Brain, RefreshCw, AlertCircle, Trash2 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import SentimentCard from '@/components/SentimentCard';
 import Filters from '@/components/Filters';
@@ -15,6 +15,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [isScraping, setIsScraping] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isCleaning, setIsCleaning] = useState(false);
   const [analyzeProgress, setAnalyzeProgress] = useState({ current: 0, total: 0 });
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -103,6 +104,34 @@ export default function Home() {
       setError(error.message || 'Failed to start scraping');
     } finally {
       setIsScraping(false);
+    }
+  };
+
+  const handleCleanup = async () => {
+    if (!window.confirm('This will remove all duplicate posts from the database. Continue?')) {
+      return;
+    }
+
+    try {
+      setIsCleaning(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      const res = await fetch('/api/cleanup', { method: 'POST' });
+      const data = await res.json();
+
+      if (data.success) {
+        setSuccessMessage(data.data.message);
+        // Refresh data after cleanup
+        setTimeout(() => fetchData(), 1000);
+      } else {
+        setError(data.error || 'Cleanup failed');
+      }
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message || 'Failed to clean up duplicates');
+    } finally {
+      setIsCleaning(false);
     }
   };
 
@@ -252,6 +281,20 @@ export default function Home() {
           >
             <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
             Refresh
+          </button>
+
+          <button
+            onClick={handleCleanup}
+            disabled={isCleaning}
+            className="px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center gap-2"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              color: 'var(--warning)',
+              border: '1px solid var(--warning)'
+            }}
+          >
+            <Trash2 size={18} className={isCleaning ? 'animate-spin' : ''} />
+            {isCleaning ? 'Cleaning...' : 'Remove Duplicates'}
           </button>
         </div>
 

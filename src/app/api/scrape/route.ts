@@ -119,11 +119,35 @@ export async function POST(request: Request) {
       console.log('Sample transformed post:', JSON.stringify(postsToInsert[0], null, 2));
     }
 
+    // Check for existing posts to avoid duplicates
+    const contentHashes = postsToInsert.map(post => post.content);
+    const { data: existingPosts } = await supabase
+      .from('political_posts')
+      .select('content')
+      .in('content', contentHashes);
+
+    const existingContentSet = new Set(existingPosts?.map(p => p.content) || []);
+    const newPosts = postsToInsert.filter(post => !existingContentSet.has(post.content));
+
+    console.log(`Filtered duplicates: ${postsToInsert.length - newPosts.length} duplicates found, ${newPosts.length} new posts to insert`);
+
+    if (newPosts.length === 0) {
+      return NextResponse.json({
+        success: true,
+        data: {
+          scraped: items.length,
+          stored: 0,
+          duplicates: postsToInsert.length,
+          message: 'All posts already exist in database (duplicates skipped).'
+        }
+      });
+    }
+
     // Insert in batches to avoid timeout
     let insertedCount = 0;
     
-    for (let i = 0; i < postsToInsert.length; i += API_LIMITS.SCRAPE_BATCH_SIZE) {
-      const batch = postsToInsert.slice(i, i + API_LIMITS.SCRAPE_BATCH_SIZE);
+    for (let i = 0; i < newPosts.length; i += API_LIMITS.SCRAPE_BATCH_SIZE) {
+      const batch = newPosts.slice(i, i + API_LIMITS.SCRAPE_BATCH_SIZE);
       const { error, data } = await supabase
         .from('political_posts')
         .insert(batch)
@@ -144,6 +168,7 @@ export async function POST(request: Request) {
         run_id: run.id,
         items_fetched: items.length,
         items_stored: insertedCount,
+        duplicates_skipped: postsToInsert.length - newPosts.length,
         actor_id: apifyActorId,
         status: 'success'
       }
@@ -154,7 +179,8 @@ export async function POST(request: Request) {
       data: {
         scraped: items.length,
         stored: insertedCount,
-        message: `Successfully scraped ${items.length} posts and stored ${insertedCount} in database.`
+        duplicates: postsToInsert.length - newPosts.length,
+        message: `Successfully scraped ${items.length} posts. Stored ${insertedCount} new posts, skipped ${postsToInsert.length - newPosts.length} duplicates.`
       }
     });
 

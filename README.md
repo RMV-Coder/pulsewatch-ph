@@ -4,7 +4,7 @@ Real-time sentiment analysis of Philippine political discourse
 
 **Real-time sentiment analysis of Philippine political discourse**
 
-A full-stack SaaS application that collects public political discussions from social media, analyzes sentiment using AI, and presents insights through an intuitive dashboard.
+A full-stack SaaS application that collects public political discussions from Reddit, analyzes sentiment using AI, and presents insights through an intuitive dashboard.
 
 ---
 
@@ -39,7 +39,9 @@ A full-stack SaaS application that collects public political discussions from so
 - ✅ **AI Sentiment Analysis** - OpenAI GPT-4 analyzes sentiment, extracts topics, generates summaries
 - ✅ **Interactive Dashboard** - Filter by sentiment, source, search posts, pagination (10/20/30/40/50)
 - ✅ **Progress Tracking** - Real-time progress bar during analysis with polling
-- ✅ **System Health Monitoring** - Track scraping/analysis metrics and system status
+- ✅ **System Health Monitoring** - Track scraping/analysis metrics and system status at `/health`
+- ✅ **Duplicate Prevention** - Content-based deduplication prevents storing duplicate posts
+- ✅ **Data Cleanup** - One-click duplicate removal with confirmation dialog
 - ✅ **Dark/Light Theme** - Persistent theme toggle with next-themes
 
 ### UI/UX Features
@@ -57,7 +59,9 @@ A full-stack SaaS application that collects public political discussions from so
 - 🔁 **Retry Logic** - Exponential backoff for OpenAI API calls
 - 💾 **Batch Processing** - Efficient batch inserts to Supabase
 - 🚦 **Error Handling** - Comprehensive try/catch with user-friendly messages
-- 📡 **REST API** - 7 endpoints for scraping, analysis, posts, analytics, health
+- � **Duplicate Detection** - Queries existing posts before insert, skips duplicates
+- 🧹 **Cleanup Endpoint** - POST /api/cleanup removes existing duplicates
+- �📡 **REST API** - 9 endpoints for scraping, analysis, posts, analytics, health, cleanup
 
 ---
 
@@ -290,7 +294,7 @@ At 100k+ records, I would:
 2. Uses `posts_with_analysis` view (auto-joins tables)
 3. Applies filters:
    - **Sentiment**: positive/negative/neutral/all
-   - **Source**: Reddit/Twitter/all
+   - **Source**: reddit/all
    - **Search**: Full-text search on content
    - **Pagination**: 10/20/30/40/50 posts per page
 4. Real-time stats from `get_system_stats()` PostgreSQL function
@@ -716,6 +720,33 @@ Analyzes unanalyzed posts with OpenAI GPT-4.
 
 ---
 
+### POST /api/cleanup
+Removes duplicate posts from the database (keeps oldest entry per content).
+
+**Rate Limit:** 10 requests/hour per IP
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Removed 15 duplicate posts",
+    "duplicatesRemoved": 15,
+    "totalPostsBefore": 100,
+    "totalPostsAfter": 85
+  }
+}
+```
+
+**Note:** This endpoint:
+- Groups posts by content (exact match)
+- Keeps the oldest post (earliest `created_at`) for each unique content
+- Deletes associated `sentiment_analysis` records first
+- Processes deletes in batches of 100
+- Logs cleanup activity to `system_health` table
+
+---
+
 ### GET /api/analyze/progress?runId={runId}
 Returns real-time analysis progress.
 
@@ -739,7 +770,7 @@ Fetches posts with optional filters and pagination.
 
 **Query Parameters:**
 - `sentiment` (optional): `positive` | `negative` | `neutral` | `all`
-- `source` (optional): `reddit` | `twitter` | `all`
+- `source` (optional): `reddit` | `all`
 - `search` (optional): Search query for content
 - `limit` (optional): Posts per page (10/20/30/40/50, default: 20)
 - `offset` (optional): Pagination offset (default: 0)
