@@ -121,7 +121,7 @@ vercel
 
 ---
 
-## � Project Structure
+## Project Structure
 
 ```
 pulsewatch-ph/
@@ -183,7 +183,7 @@ pulsewatch-ph/
 
 ---
 
-## �📊 Database Schema
+## 📊 Database Schema
 
 ### Design Reasoning
 
