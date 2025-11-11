@@ -433,7 +433,7 @@ export default function Home() {
                     boxShadow: 'var(--shadow-sm)',
                   }}
                 >
-                  Previous
+                  &lt;
                 </button>
                 
                 <div className="flex items-center gap-2 px-6 py-2.5 rounded-lg" style={{
@@ -463,7 +463,7 @@ export default function Home() {
                     boxShadow: 'var(--shadow-sm)',
                   }}
                 >
-                  Next
+                  &gt;
                 </button>
               </div>
             )}

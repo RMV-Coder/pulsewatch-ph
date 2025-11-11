@@ -16,26 +16,17 @@ export default function Navigation() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 transition-smooth hover:opacity-80">
+          <Link href="/" className="flex items-center gap-2 sm:gap-3 transition-smooth hover:opacity-80">
             <div className="w-1 h-8 rounded-full" style={{ backgroundColor: 'var(--accent-primary)' }} />
             <div>
-              <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
+              <h1 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
                 PulseWatch PH
               </h1>
             </div>
           </Link>
 
           {/* Navigation Links */}
-          <div className="flex items-center gap-6">
-            <Link 
-              href="/"
-              className="text-sm font-medium transition-smooth hover:opacity-80"
-              style={{ 
-                color: pathname === '/' ? 'var(--accent-primary)' : 'var(--text-secondary)' 
-              }}
-            >
-              Dashboard
-            </Link>
+          <div className="flex items-center gap-3 sm:gap-6">
             <Link 
               href="/health"
               className="flex items-center gap-2 text-sm font-medium transition-smooth hover:opacity-80"
@@ -44,12 +35,12 @@ export default function Navigation() {
               }}
             >
               <Activity className="w-4 h-4" />
-              Health
+              <span className="hidden sm:inline">Health</span>
             </Link>
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <ThemeToggle />
           </div>
         </div>
